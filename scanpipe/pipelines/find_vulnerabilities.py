@@ -40,7 +40,6 @@ class FindVulnerabilities(Pipeline):
         return (
             cls.check_vulnerablecode_service_availability,
             cls.lookup_packages_vulnerabilities,
-            cls.lookup_dependencies_vulnerabilities,
         )
 
     def check_vulnerablecode_service_availability(self):

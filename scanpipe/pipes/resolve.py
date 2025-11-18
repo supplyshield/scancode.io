@@ -25,6 +25,7 @@ import logging
 import sys
 import uuid
 from pathlib import Path
+from uuid import uuid4
 
 from django.core.exceptions import MultipleObjectsReturned
 from django.core.exceptions import ObjectDoesNotExist

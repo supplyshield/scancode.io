@@ -47,28 +47,34 @@ ENV PYTHONPATH=$PYTHONPATH:$APP_DIR
 # OS requirements as per
 # https://scancode-toolkit.readthedocs.io/en/latest/getting-started/install.html
 # Also install universal-ctags and xgettext for symbol and string collection.
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-       bzip2 \
-       xz-utils \
-       zlib1g \
-       libxml2-dev \
-       libxslt1-dev \
-       libgomp1 \
-       libsqlite3-0 \
-       libgcrypt20 \
-       libpopt0 \
-       libzstd1 \
-       libgpgme11 \
-       libdevmapper1.02.1 \
-       libguestfs-tools \
-       linux-image-amd64 \
-       git \
-       wait-for-it \
-       universal-ctags \
-       gettext \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+      && apt-get install -y --no-install-recommends \
+      bzip2 \
+      xz-utils \
+      zlib1g \
+      libxml2-dev \
+      libxslt1-dev \
+      libgomp1 \
+      libsqlite3-0 \
+      libgcrypt20 \
+      libpopt0 \
+      libzstd1 \
+      libgpgme11 \
+      libdevmapper1.02.1 \
+      libguestfs-tools \
+      linux-image-amd64 \
+      git \
+      java-common \
+      nodejs \
+      unzip \
+      zip \
+      wait-for-it \
+      universal-ctags \
+      gettext \
+      libpq-dev \
+      && apt-get clean \
+      && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Create the APP_USER group, user, and directory with specific UID and GID
 RUN groupadd --gid $APP_GID --system $APP_USER \
@@ -95,3 +101,18 @@ RUN pip install --no-cache-dir .
 
 # Copy the codebase and set the proper permissions for the APP_USER
 COPY --chown=$APP_USER:$APP_USER . $APP_DIR
+
+# Fix problems with SRE base image
+# hadolint ignore=DL3013
+RUN pip install --no-cache-dir --upgrade boto3 Jinja2 MarkupSafe networkx
+
+# Serve static files without nginx
+# hadolint ignore=DL3013
+RUN pip install --no-cache-dir whitenoise
+RUN make cdxgen
+RUN make javas
+ENV MVN_CMD /root/.sdkman/candidates/maven/3.9.8/bin/mvn
+
+EXPOSE 8000
+
+CMD ["/bin/sh", "init.sh"]

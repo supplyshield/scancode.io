@@ -201,7 +201,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "scanpipe.middleware.HealthCheckMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -230,7 +232,8 @@ DATABASES = {
         "PASSWORD": env.str("SCANCODEIO_DB_PASSWORD", "scancodeio"),
         "PORT": env.str("SCANCODEIO_DB_PORT", "5432"),
         "ATOMIC_REQUESTS": True,
-    }
+        "OPTIONS" : {"options": "-c search_path=public,libinv"},
+    },
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
@@ -369,6 +372,8 @@ STATICFILES_DIRS = [
     PROJECT_DIR("static"),
 ]
 
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 # Third-party apps
 
 CRISPY_TEMPLATE_PACK = "bootstrap3"
@@ -445,6 +450,15 @@ MATCHCODEIO_URL = env.str("MATCHCODEIO_URL", default="").rstrip("/")
 MATCHCODEIO_USER = env.str("MATCHCODEIO_USER", default="")
 MATCHCODEIO_PASSWORD = env.str("MATCHCODEIO_PASSWORD", default="")
 MATCHCODEIO_API_KEY = env.str("MATCHCODEIO_API_KEY", default="")
+SUPPLYSHIELD_BASE = env.str("SUPPLYSHIELD_BASE", default="")
+
+# For find_actionables pipeline
+COMMONS_NAMESPACES = env.list("COMMONS_NAMESPACES", default=[])
+
+# For generate_cdxgen_sbom pipeline
+GO_PRIVATE = env.str("GO_PRIVATE", default="")
+BASE_IMAGE_JAVA_VERSION_MAPPING = env.json("BASE_IMAGE_JAVA_VERSION_MAPPING", default={})
+JAVA_HOME = env.json("JAVA_HOME", default={})
 
 # FederatedCode integration
 

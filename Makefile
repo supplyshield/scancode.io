@@ -148,6 +148,11 @@ docs:
 	rm -rf docs/_build/
 	@${ACTIVATE} sphinx-build docs/ docs/_build/
 
+cdxgen:
+	@echo "-> Install cdxgen"
+	npm install --prefix etc/thirdparty/ yadhukrishnam/cdxgen
+	npm install --prefix etc/thirdparty/ @cyclonedx/cdxgen-plugins-bin
+
 docker-images:
 	@echo "-> Build Docker services"
 	docker compose build
@@ -164,4 +169,18 @@ offline-package: docker-images
 	@mkdir -p dist/
 	@tar -cf dist/scancodeio-offline-package-`git describe --tags`.tar build/
 
-.PHONY: virtualenv conf dev envfile install doc8 check valid check-deploy clean migrate upgrade postgresdb sqlitedb backupdb run run-docker-dev test fasttest docs docker-images offline-package
+SHELL := /bin/bash
+javas:
+	@echo "-> installing supported Java versions"
+	@echo "-> Using shell $(SHELL)"
+	curl -s "https://get.sdkman.io" | bash && \
+	source "$(HOME)/.sdkman/bin/sdkman-init.sh" && \
+	export sdkman_auto_answer=true && \
+	sdk install java 19.0.2-zulu && \
+	sdk install java 8.0.412-amzn && \
+	sdk install java 11.0.23-amzn && \
+	sdk install java 17.0.11-amzn && \
+	sdk install java 21.0.2-amzn && \
+	sdk install maven 3.9.8
+
+.PHONY: virtualenv conf dev envfile install doc8 check valid check-deploy clean migrate upgrade postgresdb sqlitedb backupdb run run-docker-dev test fasttest docs bump docker-images offline-package

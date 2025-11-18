@@ -94,6 +94,7 @@ from scorecode.contrib.django.models import ScorecardChecksMixin
 from taggit.managers import TaggableManager
 from taggit.models import GenericUUIDTaggedItemBase
 from taggit.models import TaggedItemBase
+from scanpipe.libinv_models import Wasps
 
 import scancodeio
 from scanpipe import humanize_time
@@ -567,6 +568,8 @@ class Project(UUIDPKModel, ExtraDataFieldMixin, UpdateMixin, models.Model):
         max_length=100,
         help_text=_("Name for this project."),
     )
+    wasp_uuid = models.ForeignKey(Wasps, on_delete=models.CASCADE, to_field="uuid", null=True)
+
     slug = models.SlugField(
         unique=True,
         max_length=110,  # enough for name.max_length + len(short_uuid)
@@ -631,6 +634,9 @@ class Project(UUIDPKModel, ExtraDataFieldMixin, UpdateMixin, models.Model):
         if not self.work_directory:
             self.work_directory = get_project_work_directory(project=self)
             self.setup_work_directory()
+
+        project_name_split = self.name.split("/")
+        self.wasp_uuid_id = project_name_split[0] if len(project_name_split) == 2 else None
 
         super().save(*args, **kwargs)
 
@@ -3931,6 +3937,22 @@ class DiscoveredDependencyQuerySet(
         return self.only("dependency_uid", *PACKAGE_URL_FIELDS, *extra)
 
 
+class VulnerablePaths(models.Model):
+    """
+    A project's Vulnerable Paths are records of the paths from parent to reach vulnerable packages.
+    """
+    project_name = models.CharField(max_length=255) 
+    repository_id = models.IntegerField()
+    path = models.JSONField()
+    action_item = models.CharField(max_length=255, null=True)
+    vulnerable_package_id = models.IntegerField(null=True)
+    has_commons_in_path = models.BooleanField()
+    wasp_uuid = models.UUIDField(null=True)
+    environment = models.CharField(max_length=25, null=True)
+
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, null=False, primary_key=True)
+
+
 class DiscoveredDependency(
     ProjectRelatedModel,
     UUIDFieldMixin,
@@ -4779,6 +4801,9 @@ class WebhookDelivery(UUIDPKModel, ProjectRelatedModel):
     @property
     def success(self):
         return self.response_status_code in (200, 201, 202)
+
+
+
 
 
 @receiver(models.signals.post_save, sender=settings.AUTH_USER_MODEL)

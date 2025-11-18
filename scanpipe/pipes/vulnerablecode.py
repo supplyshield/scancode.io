@@ -186,6 +186,35 @@ def bulk_search_by_purl(
     return request_post(url, data, timeout)
 
 
+def bulk_search_osv_by_purl(
+    purls,
+    timeout=None,
+):
+    """Bulk search of vulnerabilities using the provided list of `purls`."""
+
+    url = "https://api.osv.dev/v1/query"
+
+    vulnerability_datas = []
+    for purl in purls:
+        data = {"package": {"purl": purl}}
+        vulns = request_post(url, data, timeout).get("vulns")
+        if vulns:
+            affected_by_vulnerabilities = []
+            for vuln in vulns:
+                vuln["vulnerability_id"] = vuln["id"]
+                affected_by_vulnerabilities.append(vuln)
+
+            vulnerability_datas.append(
+                {
+                    "purl": purl,
+                    "affected_by_vulnerabilities": affected_by_vulnerabilities,
+                }
+            )
+
+    logger.debug(f"OSV: url={url} purls_count={len(purls)}")
+    return vulnerability_datas
+
+
 def bulk_search_by_cpes(
     cpes,
     timeout=None,
@@ -213,7 +242,7 @@ def filter_vulnerabilities(vulnerabilities, ignore_set):
 
 
 def fetch_vulnerabilities(
-    packages, chunk_size=1000, logger=logger.info, ignore_set=None
+    packages, chunk_size=1500, logger=logger.info, ignore_set=None
 ):
     """
     Fetch and store vulnerabilities for each provided ``packages``.
@@ -222,7 +251,7 @@ def fetch_vulnerabilities(
     vulnerabilities_by_purl = {}
 
     for purls_batch in chunked(get_purls(packages), chunk_size):
-        response_data = bulk_search_by_purl(purls_batch)
+        response_data = bulk_search_osv_by_purl(purls_batch)
         for vulnerability_data in response_data:
             vulnerabilities_by_purl[vulnerability_data["purl"]] = vulnerability_data
 
