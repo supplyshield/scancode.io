@@ -27,7 +27,6 @@ docker.env
 .env
 CHANGELOG.rst
 MANIFEST.in
-Makefile
 Dockerfile
 README.rst
 docker-compose.yml
