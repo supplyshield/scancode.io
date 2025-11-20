@@ -47,8 +47,13 @@ ENV PYTHONPATH=$PYTHONPATH:$APP_DIR
 # OS requirements as per
 # https://scancode-toolkit.readthedocs.io/en/latest/getting-started/install.html
 # Also install universal-ctags and xgettext for symbol and string collection.
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 RUN apt-get update \
+      && apt-get install -y --no-install-recommends \
+      curl \
+      ca-certificates \
+      gnupg \
+      && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+      && apt-get update \
       && apt-get install -y --no-install-recommends \
       bzip2 \
       xz-utils \
@@ -66,7 +71,6 @@ RUN apt-get update \
       linux-image-amd64 \
       git \
       java-common \
-      npm \
       nodejs \
       unzip \
       zip \
