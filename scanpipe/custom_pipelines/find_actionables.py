@@ -1,5 +1,4 @@
 from scanpipe.pipelines import Pipeline
-from scanpipe.models import VulnerablePaths
 
 from os.path import commonprefix
 
@@ -32,7 +31,6 @@ class FindActionables(Pipeline):
     def steps(cls):
         return (
             cls.fetch_metadata_from_wasp,
-            cls.reset_actionables,
             cls.sbom_to_graph,
             cls.fetch_all_packages,
             cls.find_parent_namespace,
@@ -274,20 +272,6 @@ class FindActionables(Pipeline):
             "non_commons": self.non_commons_paths,
             "commons": self.commons_path,
         }
-
-    def reset_actionables(self):
-        """
-        Reset the actionables field in the database
-        """ 
-        print(
-            "Resetting actionables for repository:",
-            self.repository_id,
-            "env:",
-            self.scan_environment,
-        )
-        VulnerablePaths.objects.filter(
-            repository_id=self.repository_id, environment=self.scan_environment
-        ).delete()
     
     def store_actionables(self):
         RepositoryActionablePackageAvailableVersionsAssociation.objects.filter(
@@ -321,79 +305,3 @@ class FindActionables(Pipeline):
                 wasp_uuid = self.wasp_uuid
             )
         
-
-    def store_vulnerable_paths(self):
-        self.actionables = json.dumps(self.actionables)
-        for package in self.packages:
-            self.actionables = self.actionables.replace(
-                str(package), str(self.translate_purl_to_id(str(package)))
-            )
-
-        self.actionables = json.loads(self.actionables)
-        non_commons = []
-        commons = []
-
-        for path in self.actionables.get("non_commons", []):
-            vulnerable_path = VulnerablePaths(
-                repository_id=self.repository_id,
-                project_name=self.project.name,
-                path=path.get("p"),
-                action_item=int(path.get("a")),
-                vulnerable_package_id=path.get("p")[-1],
-                has_commons_in_path=False,
-                wasp_uuid=self.wasp_uuid,
-                environment=self.scan_environment,
-            )
-            non_commons.append(vulnerable_path)
-
-        for path in self.actionables.get("commons", []):
-            vulnerable_path = VulnerablePaths(
-                repository_id=self.repository_id,
-                project_name=self.project.name,
-                path=path.get("p"),
-                action_item=int(path.get("a")),
-                vulnerable_package_id=path.get("p")[-1],
-                has_commons_in_path=True,
-                wasp_uuid=self.wasp_uuid,
-                environment=self.scan_environment,
-            )
-            commons.append(vulnerable_path)
-
-        print(
-            f"Identified {len(non_commons)} non-commons paths and {len(commons)} commons paths. Storing to DB."
-        )
-        
-        # HOTFIX 
-        return
-
-        return
-
-        if len(non_commons) == 0:
-            VulnerablePaths(
-                repository_id=self.repository_id,
-                project_name=self.project.name,
-                path=[],
-                action_item=None,
-                vulnerable_package_id=None,
-                has_commons_in_path=False,
-                wasp_uuid=self.wasp_uuid,
-                environment=self.scan_environment,
-            ).save()
-        else:
-            VulnerablePaths.objects.bulk_create(non_commons)
-
-        if len(commons) == 0:
-            VulnerablePaths(
-                repository_id=self.repository_id,
-                project_name=self.project.name,
-                path=[],
-                action_item=None,
-                vulnerable_package_id=None,
-                has_commons_in_path=True,
-                wasp_uuid=self.wasp_uuid,
-                environment=self.scan_environment,
-            ).save()
-        else:
-            VulnerablePaths.objects.bulk_create(commons)
-
-        print("Store to DB complete.")

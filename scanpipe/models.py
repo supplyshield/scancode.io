@@ -1859,8 +1859,7 @@ class InputSource(UUIDPKModel, ProjectRelatedModel):
     The file can either be "uploaded", or "fetched" from a provided `download_url`.
     """
 
-    download_url = models.CharField(
-        max_length=1024,
+    download_url = models.TextField(
         blank=True,
         help_text=_("Download URL of the input file."),
     )
@@ -3935,22 +3934,6 @@ class DiscoveredDependencyQuerySet(
             extra = []
 
         return self.only("dependency_uid", *PACKAGE_URL_FIELDS, *extra)
-
-
-class VulnerablePaths(models.Model):
-    """
-    A project's Vulnerable Paths are records of the paths from parent to reach vulnerable packages.
-    """
-    project_name = models.CharField(max_length=255) 
-    repository_id = models.IntegerField()
-    path = models.JSONField()
-    action_item = models.CharField(max_length=255, null=True)
-    vulnerable_package_id = models.IntegerField(null=True)
-    has_commons_in_path = models.BooleanField()
-    wasp_uuid = models.UUIDField(null=True)
-    environment = models.CharField(max_length=25, null=True)
-
-    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, null=False, primary_key=True)
 
 
 class DiscoveredDependency(
